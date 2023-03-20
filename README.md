@@ -12,7 +12,6 @@ When you have installed Encore, you can create a new Encore application and clon
 encore app create my-app-name --example=hello-world
 ```
 
-
 ## Running
 
 ```bash
@@ -47,3 +46,8 @@ Then head over to <https://app.encore.dev> to find out your production URL, and 
 ```bash
 encore test ./...
 ```
+
+# Add Search Attribute
+
+tctl adm cl asa -n TransactionPendingAmount -t Keyword
+tctl adm cl asa -n TransactionUserId -t Int
