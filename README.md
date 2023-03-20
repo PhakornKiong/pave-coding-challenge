@@ -1,8 +1,14 @@
+https://user-images.githubusercontent.com/30017432/226439153-c0429cd6-747d-4cf6-be84-320738a1ef72.mp4
+
 ### Q1 .Explain what an eventually consistent ledger would need to look out for, what are some of the CAP theorem and database considerations that are relevant when designing a bank ledger.
 
 An eventually consistent ledger means that there are risks of overdraft.
 
 ### Q2. Explain your solution, how does matching work? What will scaling look like? How would you improve the API beyond a toy implementation?
+
+
+
+
 
 <details>
 <summary>Solution</summary>
