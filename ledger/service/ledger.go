@@ -1,7 +1,10 @@
 package service
 
 import (
+	"fmt"
+
 	"encore.app/ledger/repository"
+	"encore.dev/rlog"
 	tb_types "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
 )
 
@@ -32,35 +35,42 @@ func (s *LedgerService) GetAccountBalance(id string) (LedgerAccount, error) {
 	return ledgerAccount, nil
 }
 
-func (s *LedgerService) AuthorizePayment(customerId string, amount int) (string, error) {
-	transferId, _ := s.LedgerRepo.CreatePendingTransfer(customerId, amount)
-	return transferId, nil
+func (s *LedgerService) AddAccountBalance(customerId string, amount int) (string, error) {
+	// default debit user 1 as our own bank
+	transferId, err := s.LedgerRepo.CreateTransfer("1", customerId, amount)
+	return transferId, err
 }
 
-func (s *LedgerService) ReleasePayment(customerId string, amount int) (string, error) {
-	// Does matching using workflow
-	// Branch here, like presentment logic
-	id := "1679286557552265000"
+func (s *LedgerService) CreatePayment(customerId string, amount int) (string, error) {
+	// default credit user 1 as our own bank
+	transferId, err := s.LedgerRepo.CreateTransfer(customerId, "1", amount)
+	return transferId, err
+}
+
+func (s *LedgerService) AuthorizePayment(customerId string, amount int) (string, error) {
+	transferId, err := s.LedgerRepo.CreatePendingTransfer(customerId, amount)
+	return transferId, err
+}
+
+func (s *LedgerService) ReleasePayment(id string) (string, error) {
 	transferId, _ := s.LedgerRepo.PostPendingTransfer(id)
 	return transferId, nil
 }
 
 func (s *LedgerService) VoidPendingPayment(id string) (string, error) {
-	// Does matching using workflow
-	// id := "1679286557552265000"
 	transferId, _ := s.LedgerRepo.VoidPendingTransfer(id)
 	return transferId, nil
 }
 
 // Assume Debit is asset and Credit is liability
-// Account 0 is the bank, others are customers
-// So balance is technically credit
-// This will cause integer overflow for bank typed account
+// Account 1 is the bank, others are customers
+// So balance is customer POV is technically credit
+// TODO: Handle overflow
 func buildLedgerAccount(account *tb_types.Account) LedgerAccount {
 	creditPosted := account.CreditsPosted
 	debitPosted, debitPending := account.DebitsPosted, account.DebitsPending
-
-	available := creditPosted - debitPosted
+	rlog.Info(fmt.Sprint(debitPosted, debitPending, account.CreditsPending, creditPosted))
+	available := creditPosted - debitPosted - debitPending
 	reserved := debitPending
 	balance := AccountBalance{Available: available, Reserved: reserved}
 	return LedgerAccount{Id: account.ID.String(), Balance: balance}

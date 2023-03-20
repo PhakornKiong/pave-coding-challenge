@@ -82,6 +82,33 @@ func (r *TBLedgerRepository) CreatePendingTransfer(id string, amount int) (strin
 	transfersRes, err := db.CreateTransfers([]tb_types.Transfer{transfer})
 
 	for _, err := range transfersRes {
+		rlog.Error("Batch transfer failed to create", "err", err.Result.String())
+		return "", errs.B().Msg(err.Result.String()).Err()
+	}
+
+	return transferId, err
+}
+
+func (r *TBLedgerRepository) CreateTransfer(debitor string, creditor string, amount int) (string, error) {
+	transferId := generateId()
+	transfer := tb_types.Transfer{
+		ID:              uint128(transferId),
+		PendingID:       tb_types.Uint128{},
+		DebitAccountID:  uint128(debitor),
+		CreditAccountID: uint128(creditor),
+		UserData:        tb_types.Uint128{},
+		Reserved:        tb_types.Uint128{},
+		Timeout:         0,
+		Ledger:          1,
+		Code:            1,
+		Flags:           0,
+		Amount:          uint64(amount),
+		Timestamp:       0,
+	}
+
+	transfersRes, err := db.CreateTransfers([]tb_types.Transfer{transfer})
+
+	for _, err := range transfersRes {
 		rlog.Error("Batch transfer at %d failed to create: %s", err.Index, err.Result)
 	}
 
@@ -136,7 +163,7 @@ func createAccountArg(id string, ledger uint32) []tb_types.Account {
 		Reserved:       [48]uint8{},
 		Ledger:         ledger,
 		Code:           718,
-		Flags:          0,
+		Flags:          tb_types.AccountFlags{DebitsMustNotExceedCredits: true}.ToUint16(),
 		DebitsPending:  0,
 		DebitsPosted:   0,
 		CreditsPending: 0,

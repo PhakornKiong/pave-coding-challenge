@@ -20,17 +20,35 @@ func Greeting(ctx workflow.Context, name string) (string, error) {
 	return result, err
 }
 
-func ExpireAuthorization(ctx workflow.Context, id string) (string, error) {
+func ExpireAuthorization(ctx workflow.Context, id string) error {
+	expirationTimeout := time.Second * 100
 	var a *Activities
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 1000,
 	}
+	cancelChan := workflow.GetSignalChannel(ctx, "cancel")
+
 	ctx = workflow.WithActivityOptions(ctx, options)
 
-	workflow.Sleep(ctx, 5*time.Second)
+	childCtx, cancelHandler := workflow.WithCancel(ctx)
+	selector := workflow.NewSelector(ctx)
 
 	var result string
-	err := workflow.ExecuteActivity(ctx, a.ExpireAuthorization, id).Get(ctx, &result)
+	timerFuture := workflow.NewTimer(childCtx, expirationTimeout)
 
-	return result, err
+	selector.AddReceive(cancelChan, func(c workflow.ReceiveChannel, more bool) {
+		// If a cancel signal is received, cancel workflow
+		workflow.GetLogger(ctx).Info("Cancel signal received")
+		c.Receive(ctx, nil)
+		cancelHandler()
+	})
+
+	selector.AddFuture(timerFuture, func(f workflow.Future) {
+		workflow.ExecuteActivity(ctx, a.ExpireAuthorization, id).Get(ctx, &result)
+	})
+
+	selector.Select(ctx)
+
+	workflow.GetLogger(ctx).Info("Expiration Workflow completed.")
+	return nil
 }

@@ -49,5 +49,6 @@ encore test ./...
 
 # Add Search Attribute
 
-tctl adm cl asa -n TransactionPendingAmount -t Keyword
-tctl adm cl asa -n TransactionUserId -t Int
+tctl adm cl asa -n TransactionPendingAmount -t Int
+tctl adm cl asa -n TransactionUserId -t Keyword
+tctl admin cl gsa

@@ -7,6 +7,7 @@ import (
 	"encore.app/ledger/service"
 	"encore.app/ledger/workflow"
 	"encore.dev"
+	"encore.dev/rlog"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -18,14 +19,15 @@ var (
 
 //encore:service
 type Service struct {
-	ledgerService service.LedgerService
-	client        client.Client
-	worker        worker.Worker
+	ledgerService   service.LedgerService
+	client          client.Client
+	worker          worker.Worker
+	workflowService service.WorkflowService
 }
 
 func initService() (*Service, error) {
 
-	c, err := client.Dial(client.Options{})
+	c, err := client.Dial(client.Options{Logger: rlog.With()})
 	if err != nil {
 		return nil, fmt.Errorf("create temporal client: %v", err)
 	}
@@ -40,15 +42,16 @@ func initService() (*Service, error) {
 
 	tbLedger := repository.TBLedgerRepository{}
 	tbLedger.Init()
-	service := service.LedgerService{LedgerRepo: &tbLedger}
+	lService := service.LedgerService{LedgerRepo: &tbLedger}
+	wfService := service.WorkflowService{Client: c}
 
 	// Temporal Workflow
 	w.RegisterWorkflow(workflow.Greeting)
 	w.RegisterActivity(workflow.ComposeGreeting)
 
 	w.RegisterWorkflow(workflow.ExpireAuthorization)
-	activities := &workflow.Activities{LedgerService: service}
+	activities := &workflow.Activities{LedgerService: lService}
 	w.RegisterActivity(activities)
 
-	return &Service{ledgerService: service, client: c, worker: w}, nil
+	return &Service{ledgerService: lService, client: c, worker: w, workflowService: wfService}, nil
 }

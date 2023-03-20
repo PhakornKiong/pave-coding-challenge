@@ -7,6 +7,7 @@ type LedgerRepository interface {
 	CreateAccount(id string) error
 	GetAccount(id string) (*tb_types.Account, error)
 	CreatePendingTransfer(id string, amount int) (string, error)
+	CreateTransfer(debitor string, creditor string, amount int) (string, error)
 	PostPendingTransfer(pendingId string) (string, error)
 	VoidPendingTransfer(pendingId string) (string, error)
 }
