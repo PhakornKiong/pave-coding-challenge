@@ -46,9 +46,6 @@ func initService() (*Service, error) {
 	wfService := service.WorkflowService{Client: c}
 
 	// Temporal Workflow
-	w.RegisterWorkflow(workflow.Greeting)
-	w.RegisterActivity(workflow.ComposeGreeting)
-
 	w.RegisterWorkflow(workflow.ExpireAuthorization)
 	activities := &workflow.Activities{LedgerService: lService}
 	w.RegisterActivity(activities)

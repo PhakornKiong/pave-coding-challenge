@@ -1,10 +1,7 @@
 package service
 
 import (
-	"fmt"
-
 	"encore.app/ledger/repository"
-	"encore.dev/rlog"
 	tb_types "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
 )
 
@@ -69,7 +66,7 @@ func (s *LedgerService) VoidPendingPayment(id string) (string, error) {
 func buildLedgerAccount(account *tb_types.Account) LedgerAccount {
 	creditPosted := account.CreditsPosted
 	debitPosted, debitPending := account.DebitsPosted, account.DebitsPending
-	rlog.Info(fmt.Sprint(debitPosted, debitPending, account.CreditsPending, creditPosted))
+
 	available := creditPosted - debitPosted - debitPending
 	reserved := debitPending
 	balance := AccountBalance{Available: available, Reserved: reserved}

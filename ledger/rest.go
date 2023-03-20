@@ -7,23 +7,12 @@ import (
 	"encore.app/ledger/workflow"
 	"encore.dev/beta/errs"
 	"encore.dev/rlog"
-	"go.temporal.io/sdk/client"
 )
 
 // Get Account Balance
 //
 // encore:api public method=GET path=/ledger/:id/balance
 func (s *Service) GetAccountBalance(ctx context.Context, id string) (service.LedgerAccount, error) {
-	options := client.StartWorkflowOptions{
-		TaskQueue: taskQueue,
-	}
-
-	we, err := s.client.ExecuteWorkflow(ctx, options, workflow.Greeting, "asdasd")
-	if err != nil {
-		rlog.Error("error workflow")
-	}
-	rlog.Info("started workflow", "id", we.GetID(), "run_id", we.GetRunID())
-
 	acc, err := s.ledgerService.GetAccountBalance(id)
 	return acc, err
 }
@@ -71,6 +60,7 @@ type AuthorizePaymentResponse struct {
 //encore:api public method=POST path=/ledger/:id/authorize
 func (s *Service) AuthorizePayment(ctx context.Context, id string, payload *AuthorizePaymentPayload) (AuthorizePaymentResponse, error) {
 	authorizationId, err := s.ledgerService.AuthorizePayment(id, payload.Amount)
+
 	if err != nil {
 		return AuthorizePaymentResponse{""}, err
 	}
