@@ -2,13 +2,15 @@ https://user-images.githubusercontent.com/30017432/226439153-c0429cd6-747d-4cf6-
 
 ### Q1 .Explain what an eventually consistent ledger would need to look out for, what are some of the CAP theorem and database considerations that are relevant when designing a bank ledger.
 
-An eventually consistent ledger means that there are risks of overdraft.
+An eventually consistent ledger means that we prioritize availability over consistency. Reconcialition becomes very important since the system will have have t+1 ... t+n inconsistency. Strategy swuch as periodic synchronization, conflic resolution, version vectors could be used.
+
+Proper usage of concensus algo will help when there is a network partition.
+
+Concurrency control mechanisms to ensure that transactions are atomic, isolated, and consistent.
+
+Data durability during writes, probably can implement write-ahead logging and backup strategy to ensure that no write will be lost. We only start comitting writes to DB after write-ahead logging is completed.
 
 ### Q2. Explain your solution, how does matching work? What will scaling look like? How would you improve the API beyond a toy implementation?
-
-
-
-
 
 <details>
 <summary>Solution</summary>
