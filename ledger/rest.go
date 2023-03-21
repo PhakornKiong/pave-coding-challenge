@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"encore.app/ledger/service"
-	"encore.app/ledger/workflow"
 	"encore.dev/beta/errs"
-	"encore.dev/rlog"
 )
 
 // Get Account Balance
@@ -59,14 +57,12 @@ type AuthorizePaymentResponse struct {
 //
 //encore:api public method=POST path=/ledger/:id/authorize
 func (s *Service) AuthorizePayment(ctx context.Context, id string, payload *AuthorizePaymentPayload) (AuthorizePaymentResponse, error) {
-	authorizationId, err := s.ledgerService.AuthorizePayment(id, payload.Amount)
+	authorizationId, err := s.ledgerService.AuthorizePayment(ctx, id, payload.Amount)
 
 	if err != nil {
 		return AuthorizePaymentResponse{""}, err
 	}
 
-	s.workflowService.RunWF(ctx, id, payload.Amount, authorizationId, taskQueue, workflow.ExpireAuthorization)
-	s.workflowService.SearchExpirationWF(ctx, id, payload.Amount)
 	return AuthorizePaymentResponse{authorizationId}, nil
 }
 
@@ -79,18 +75,11 @@ type PresentmentPayload struct {
 // encore:api public method=POST path=/ledger/:id/presentment
 func (s *Service) Presentment(ctx context.Context, id string, payload *PresentmentPayload) (AuthorizePaymentResponse, error) {
 
-	wfId := s.workflowService.SearchExpirationWF(ctx, id, payload.Amount)
+	id, err := s.ledgerService.Presentment(ctx, id, payload.Amount)
 
-	// Factory would be nice here
-	// Presentment Without Authorisation
-	if len(wfId) <= 0 {
-		id, _ := s.ledgerService.CreatePayment(id, payload.Amount)
-		return AuthorizePaymentResponse{id}, nil
+	if err != nil {
+		return AuthorizePaymentResponse{""}, err
 	}
-	// Presentment With Authorisation
-	s.client.SignalWorkflow(ctx, wfId, "", "cancel", "")
-	authorizationId, _ := s.ledgerService.ReleasePayment(wfId)
 
-	rlog.Info(authorizationId)
-	return AuthorizePaymentResponse{authorizationId}, nil
+	return AuthorizePaymentResponse{id}, nil
 }

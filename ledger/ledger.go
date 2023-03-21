@@ -19,10 +19,9 @@ var (
 
 //encore:service
 type Service struct {
-	ledgerService   service.LedgerService
-	client          client.Client
-	worker          worker.Worker
-	workflowService service.WorkflowService
+	ledgerService service.LedgerService
+	client        client.Client
+	worker        worker.Worker
 }
 
 func initService() (*Service, error) {
@@ -42,13 +41,13 @@ func initService() (*Service, error) {
 
 	tbLedger := repository.TBLedgerRepository{}
 	tbLedger.Init()
-	lService := service.LedgerService{LedgerRepo: &tbLedger}
-	wfService := service.WorkflowService{Client: c}
+	wfService := service.WorkflowService{Client: c, TaskQueue: taskQueue}
+	lService := service.LedgerService{LedgerRepo: &tbLedger, WorkflowService: wfService}
 
 	// Temporal Workflow
 	w.RegisterWorkflow(workflow.ExpireAuthorization)
-	activities := &workflow.Activities{LedgerService: lService}
+	activities := &workflow.Activities{LedgerRepo: &tbLedger}
 	w.RegisterActivity(activities)
 
-	return &Service{ledgerService: lService, client: c, worker: w, workflowService: wfService}, nil
+	return &Service{ledgerService: lService, client: c, worker: w}, nil
 }

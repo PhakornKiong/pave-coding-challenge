@@ -10,7 +10,8 @@ import (
 )
 
 type WorkflowService struct {
-	Client client.Client
+	Client    client.Client
+	TaskQueue string
 }
 
 func (s *WorkflowService) SearchExpirationWF(ctx context.Context, id string, amount int) string {
@@ -37,7 +38,7 @@ func (s *WorkflowService) SearchExpirationWF(ctx context.Context, id string, amo
 	return wfId
 }
 
-func (s *WorkflowService) RunWF(ctx context.Context, id string, amount int, authorizationId string, taskQueue string, workflow interface{}) {
+func (s *WorkflowService) RunWF(ctx context.Context, id string, amount int, authorizationId string, workflow interface{}) {
 	searchAttributes := map[string]interface{}{
 		"TransactionPendingAmount": amount,
 		"TransactionUserId":        id,
@@ -45,7 +46,7 @@ func (s *WorkflowService) RunWF(ctx context.Context, id string, amount int, auth
 
 	options := client.StartWorkflowOptions{
 		ID:               authorizationId,
-		TaskQueue:        taskQueue,
+		TaskQueue:        s.TaskQueue,
 		SearchAttributes: searchAttributes,
 	}
 
@@ -54,4 +55,8 @@ func (s *WorkflowService) RunWF(ctx context.Context, id string, amount int, auth
 		rlog.Error("error workflow")
 	}
 	rlog.Info("started workflow", "id", we.GetID(), "run_id", we.GetRunID())
+}
+
+func (s *WorkflowService) CancelExpirationWF(ctx context.Context, wfId string) {
+	s.Client.SignalWorkflow(ctx, wfId, "", "cancel", "")
 }

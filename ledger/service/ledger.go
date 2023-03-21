@@ -1,12 +1,16 @@
 package service
 
 import (
+	"context"
+
 	"encore.app/ledger/repository"
+	"encore.app/ledger/workflow"
 	tb_types "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
 )
 
 type LedgerService struct {
-	LedgerRepo repository.LedgerRepository
+	LedgerRepo      repository.LedgerRepository
+	WorkflowService WorkflowService
 }
 
 type AccountBalance struct {
@@ -44,8 +48,11 @@ func (s *LedgerService) CreatePayment(customerId string, amount int) (string, er
 	return transferId, err
 }
 
-func (s *LedgerService) AuthorizePayment(customerId string, amount int) (string, error) {
+func (s *LedgerService) AuthorizePayment(ctx context.Context, customerId string, amount int) (string, error) {
 	transferId, err := s.LedgerRepo.CreatePendingTransfer(customerId, amount)
+
+	s.WorkflowService.RunWF(ctx, customerId, amount, transferId, workflow.ExpireAuthorization)
+
 	return transferId, err
 }
 
@@ -57,6 +64,26 @@ func (s *LedgerService) ReleasePayment(id string) (string, error) {
 func (s *LedgerService) VoidPendingPayment(id string) (string, error) {
 	transferId, _ := s.LedgerRepo.VoidPendingTransfer(id)
 	return transferId, nil
+}
+
+func (s *LedgerService) Presentment(ctx context.Context, id string, amount int) (string, error) {
+	wfId := s.WorkflowService.SearchExpirationWF(ctx, id, amount)
+
+	if len(wfId) <= 0 {
+		id, err := s.CreatePayment(id, amount)
+
+		if err != nil {
+			return "", err
+		}
+
+		return id, nil
+	}
+
+	// Presentment With Authorisation
+	s.WorkflowService.CancelExpirationWF(ctx, wfId)
+	authorizationId, _ := s.ReleasePayment(wfId)
+
+	return authorizationId, nil
 }
 
 // Assume Debit is asset and Credit is liability

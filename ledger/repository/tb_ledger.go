@@ -109,7 +109,8 @@ func (r *TBLedgerRepository) CreateTransfer(debitor string, creditor string, amo
 	transfersRes, err := db.CreateTransfers([]tb_types.Transfer{transfer})
 
 	for _, err := range transfersRes {
-		rlog.Error("Batch transfer at %d failed to create: %s", err.Index, err.Result)
+		rlog.Error("Batch transfer failed to create", "err", err.Result.String())
+		return "", errs.B().Msg(err.Result.String()).Err()
 	}
 
 	return transferId, err
