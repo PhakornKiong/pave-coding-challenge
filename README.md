@@ -1,6 +1,16 @@
-https://user-images.githubusercontent.com/30017432/226439153-c0429cd6-747d-4cf6-be84-320738a1ef72.mp4
+
+## Demo
+https://user-images.githubusercontent.com/30017432/226511369-4e694ee3-a8bd-41c5-894f-67a395e3fac4.mp4
+
+
+<details>
+<summary>Error Demo</summary>
+ <video src="https://user-images.githubusercontent.com/30017432/226511381-9598e666-b76c-4be1-a8ac-29161b498e79.mp4">
+</details>
 
 ### Q1 .Explain what an eventually consistent ledger would need to look out for, what are some of the CAP theorem and database considerations that are relevant when designing a bank ledger.
+
+![image](https://user-images.githubusercontent.com/30017432/226511715-273da1de-9d2b-4b0f-b756-51b3c27983a8.png)
 
 An eventually consistent ledger means that we prioritize availability over consistency. Reconcialition becomes very important since the system will have have t+1 ... t+n inconsistency. Strategy swuch as periodic synchronization, conflic resolution, version vectors could be used.
 
@@ -40,7 +50,9 @@ For Scaling, we will need to abstract the exposed API to consumer of the ledger.
 
 The parameters for batching will depends largely on the volume that we want to serve, probably by fixed interval + batch size + priority of transaction
 
-Move more business logic into workflows, authorization should probably be workflow. This would make handling of business logic very granular, and there is full observability.
+Proper error handling, abstraction of ledger for different kind of users
+
+Asynchronous operation can be in workflows
 
 ## Test Steps
 
